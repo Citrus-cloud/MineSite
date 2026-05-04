@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComfyUI Artist | горы + неон + DnD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a1a2a, #1a2a1a, #2a1a0a);
+            color: #eeddcc;
+            font-family: system-ui, 'Segoe UI', serif;
+            line-height: 1.5;
+            min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.pexels.com/photos/1366919/mountain-lake-landscape-nature-1366919.jpg?auto=compress&cs=tinysrgb&w=1600');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0.3;
+            z-index: -1;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1.2rem; position: relative; z-index: 1; }
+        .navbar {
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-radius: 0 0 20px 20px;
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; background: linear-gradient(135deg, #00f2ff, #ff2d95); background-clip: text; color: transparent; }
+        .nav-links { display: flex; gap: 1.3rem; flex-wrap: wrap; }
+        .nav-links a { color: #ccddf8; text-decoration: none; }
+        .hero { padding: 2rem 0; }
+        .hero h1 { font-size: 2.8rem; background: linear-gradient(135deg, #fff, #00f2ff, #ff2d95); background-clip: text; color: transparent; }
+        .team-header { background: rgba(0,0,0,0.5); border-radius: 2rem; padding: 0.8rem 1.2rem; margin: 1rem 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+        .lead-specialist { font-weight: bold; background: #00f2ff20; padding: 0.3rem 1rem; border-radius: 2rem; }
+        .partner-chips { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        .partner-chip { background: rgba(0,0,0,0.5); border-radius: 2rem; padding: 0.2rem 0.8rem; }
+        .partner-chip a { color: #ffd966; text-decoration: none; }
+        .btn-group { margin: 1rem 0; }
+        .btn { display: inline-block; background: rgba(0,0,0,0.5); border: 1px solid #00f2ff; padding: 0.6rem 1.4rem; border-radius: 2rem; color: #b0f0ff; text-decoration: none; margin-right: 0.8rem; }
+        .btn-primary { background: linear-gradient(95deg, #00f2ff, #0088ff); color: #010105; }
+        section { padding: 2rem 0; border-top: 1px solid #ffb34733; }
+        h2 { font-size: 1.8rem; margin-bottom: 1rem; border-left: 4px solid #ffb347; padding-left: 0.8rem; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+        .gallery-item { aspect-ratio: 1; background: #1e1a14; border-radius: 1rem; overflow: hidden; border: 1px solid #b87c3a; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+        .video-card { background: rgba(0,0,0,0.5); border-radius: 1rem; padding: 0.8rem; }
+        video { width: 100%; border-radius: 0.7rem; }
+        .music-player { background: rgba(0,0,0,0.5); border-radius: 1.5rem; padding: 1rem; }
+        .track { background: #2d241a; border-radius: 3rem; padding: 0.5rem 1rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .play-btn { background: #c6893b; border: none; padding: 0.3rem 1rem; border-radius: 2rem; cursor: pointer; color: white; }
+        .partners-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+        .partner-card { background: rgba(0,0,0,0.5); border-radius: 1rem; padding: 0.6rem 1rem; text-align: center; min-width: 130px; }
+        .partner-card a { color: #ffd966; text-decoration: none; }
+        .social-links { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+        .social-links a { background: #2d241a; padding: 0.4rem 1rem; border-radius: 2rem; text-decoration: none; color: #ecd99b; }
+        footer { text-align: center; padding: 1rem; border-top: 1px solid #a77746; margin-top: 2rem; }
+        @media (max-width: 700px) { .hero h1 { font-size: 2rem; } .team-header { flex-direction: column; } }
+    </style>
+</head>
+
+<body>
+  <!-- Магический туман -->
+<div class="fog">
+    <div class="fog-layer"></div>
+    <div class="fog-layer-right"></div>
+</div>
+<div class="fog-bottom"></div><script>// ================== DM ОРАКУЛ: d20 + 80+ вариантов ==================
+(function() {
+    window.addEventListener('DOMContentLoaded', function() {
+        const dmBtn = document.getElementById('dmOracleBtn');
+        const dmResultDiv = document.getElementById('dmResult');
+        
+        if (!dmBtn || !dmResultDiv) return;
+
+        const heroes = ["Магор Теневой Ассасин", "Микаил Рыцарь-по-праву", "Азраил Чёрный Рыцарь", "Адаман Друид", "Иса Бард"];
+        
+        function getRandomHero() {
+            return heroes[Math.floor(Math.random() * heroes.length)];
+        }
+
+        const predictions = {
+            1: [
+                `💀 КРИТПРОВАЛ (1): ${getRandomHero()} попытался поймать твой меч, но поймал лезвие. Теперь два раненых.`,
+                `💀 КРИТПРОВАЛ (1): ${getRandomHero()} закричал «Берегись!», ты испугался и уронил штаны. Враг в замешательстве.`,
+                `💀 КРИТПРОВАЛ (1): Ты хотел эффектно войти в бой, но споткнулся о плащ ${getRandomHero()}. Приземление на лицо.`,
+                `💀 КРИТПРОВАЛ (1): Ты попытался выпить зелье силы, но ${getRandomHero()} выбил его — это была отрава. Спасибо, герой.`
+            ],
+            2: [
+                `💀 ПРОВАЛ (2): ${getRandomHero()} дал тебе карту, но ты держал её вверх ногами и пришёл к дракону в логово.`,
+                `💀 ПРОВАЛ (2): Ты кинул дымовую шашку, но ветер дунул в лицо. Теперь кашляет вся твоя группа. ${getRandomHero()} недоволен.`,
+                `💀 ПРОВАЛ (2): ${getRandomHero()} заслонил тебя от удара, но получил сам. Ты чувствуешь вину.`,
+                `💀 ПРОВАЛ (2): Ты пытался повторить коронный удар ${getRandomHero()}, но порвал связки. Теперь ты хромаешь.`
+            ],
+            3: [
+                `💀 ПРОВАЛ (3): ${getRandomHero()} заорал «Ложись!», а ты подпрыгнул. Над головой пролетел топор. Ещё чуть-чуть...`,
+                `💀 ПРОВАЛ (3): Твой лук лопнул при натяжении. ${getRandomHero()} одалживает свой, но шепчет «Потом вернёшь».`,
+                `💀 ПРОВАЛ (3): Ты выбежал из укрытия раньше команды ${getRandomHero()}. Враги заметили всех.`,
+                `💀 ПРОВАЛ (3): Ты спутал зелье лечения с маслом для обуви. Теперь твои сапоги блестят, а раны нет.`
+            ],
+            4: [
+                `❌ ПРОВАЛ (4): ${getRandomHero()} хотел дать тебе волшебный амулет, но выронил его в лаву. Прощай, артефакт.`,
+                `❌ ПРОВАЛ (4): Ты применил технику ${getRandomHero()}, но забыл снять перчатки. Пальцы свело судорогой.`,
+                `❌ ПРОВАЛ (4): Ты целился во врага, но попал в шлем ${getRandomHero()}. Тот снял его и сказал: «Ещё раз — убью».`,
+                `❌ ПРОВАЛ (4): Ты провалился сквозь прогнивший пол. ${getRandomHero()} смеётся сверху. Обидно.`
+            ],
+            5: [
+                `❌ НЕУДАЧА (5): ${getRandomHero()} прикрывал тебя, но ты выскочил прямо под стрелу. Хорошо, что она была тупая.`,
+                `❌ НЕУДАЧА (5): Ты попытался незаметно пройти мимо врага, но ${getRandomHero()} чихнул. Засада сорвана.`,
+                `❌ НЕУДАЧА (5): Ты запутался в мантии ${getRandomHero()} и упал. Битва превратилась в цирк.`,
+                `❌ НЕУДАЧА (5): Ты швырнул камень в врага, но попал в колено ${getRandomHero()}. Боец временно выведен из строя.`
+            ],
+            6: [
+                `❌ НЕУДАЧА (6): ${getRandomHero()} позвал тебя за собой, но ты свернул не туда и забрёл в паучье гнездо.`,
+                `❌ НЕУДАЧА (6): Ты применил заклинание ${getRandomHero()}, но перепутал ингредиенты — вместо огня пошёл дым.`,
+                `❌ НЕУДАЧА (6): ${getRandomHero()} дал тебе знак атаковать, но ты засмотрелся на бабочку. Момент упущен.`,
+                `❌ НЕУДАЧА (6): Твоя стрела застряла в дереве. ${getRandomHero()} молча достаёт свою и стреляет за тебя.`
+            ],
+            7: [
+                `😐 НЕПЛОХО (7): ${getRandomHero()} похлопал тебя по плечу: «Живой — и ладно». Так себе поддержка.`,
+                `😐 НЕПЛОХО (7): Твой удар отбросил врага, но ты поскользнулся и сел в лужу. Героически.`,
+                `😐 НЕПЛОХО (7): ${getRandomHero()} научил тебя новому блоку, но ты делаешь его слишком медленно.`,
+                `😐 НЕПЛОХО (7): Ты сломал меч, но добил врага обломком. ${getRandomHero()} молча кивает.`
+            ],
+            8: [
+                `😐 НЕПЛОХО (8): ${getRandomHero()} сказал «Терпимо». Для него это высокая оценка.`,
+                `😐 НЕПЛОХО (8): Ты попал в цель, но танцевал победный танец и потерял равновесие.`,
+                `😐 НЕПЛОХО (8): ${getRandomHero()} прикрыл тебя, но получил лёгкую царапину. Теперь ты должен ему.`,
+                `😐 НЕПЛОХО (8): Ты увернулся от удара, но отпрыгнул прямо в крапиву. Сыпь обеспечена.`
+            ],
+            9: [
+                `👍 УСПЕХ (9): ${getRandomHero()} дал тебе ценный совет перед боем. Ты использовал его и попал в цель.`,
+                `👍 УСПЕХ (9): Ты ударил врага ногой, но попал по щиту ${getRandomHero()}. Тот молча смотрит.`,
+                `👍 УСПЕХ (9): Ты вовремя заметил ловушку благодаря крику ${getRandomHero()}. Спасён.`,
+                `👍 УСПЕХ (9): Твой случайный удар сбил шлем с врага. Тот растерялся. Тактика хаоса работает.`
+            ],
+            10: [
+                `👍 УСПЕХ (10): ${getRandomHero()} закричал «Бей!», и ты ударил не глядя. Попал! Чудо.`,
+                `👍 УСПЕХ (10): Ты сломал врагу нос локтем. ${getRandomHero()} сказал: «Грязно, но эффективно».`,
+                `👍 УСПЕХ (10): Ты вовремя пригнулся из-за толчка ${getRandomHero()}. Над головой просвистел топор.`,
+                `👍 УСПЕХ (10): Ты использовал грязный трюк, которому научился у ${getRandomHero()}. Враг в ярости.`
+            ],
+            11: [
+                `⭐ ХОРОШО (11): ${getRandomHero()} сказал: «Неплохо! Ещё пару тренировок — и ты меня догонишь».`,
+                `⭐ ХОРОШО (11): Твой удар был настолько точным, что ${getRandomHero()} присвистнул.`,
+                `⭐ ХОРОШО (11): Ты применил связку приёмов, которую показал ${getRandomHero()}. Получилось гладко.`,
+                `⭐ ХОРОШО (11): Ты отбил стрелу щитом и попал врагу в ногу. Рикошет — это красиво.`
+            ],
+            12: [
+                `⭐ ХОРОШО (12): ${getRandomHero()} кивнул тебе после боя. Молчаливое одобрение.`,
+                `⭐ ХОРОШО (12): Ты зашёл врагу за спину, пока ${getRandomHero()} отвлекал. Работа в команде!`,
+                `⭐ ХОРОШО (12): Твоя контратака была безупречна. ${getRandomHero()} хлопнул в ладоши.`,
+                `⭐ ХОРОШО (12): Ты спас ${getRandomHero()} от стрелы, подставив щит. Теперь он твой должник.`
+            ],
+            13: [
+                `✨ ОТЛИЧНО (13): ${getRandomHero()} сказал: «Ты меня удивил. Редкий случай».`,
+                `✨ ОТЛИЧНО (13): Твой манёвр заставил врага ошибиться. ${getRandomHero()} подхватил и добил.`,
+                `✨ ОТЛИЧНО (13): Ты применил приём, которому ${getRandomHero()} научил тебя вчера. Идеально.`,
+                `✨ ОТЛИЧНО (13): Ты выбил оружие из рук врага красивым подкатом. ${getRandomHero()} улыбнулся.`
+            ],
+            14: [
+                `✨ ОТЛИЧНО (14): ${getRandomHero()} торжественно пожал тебе руку. Это признание.`,
+                `✨ ОТЛИЧНО (14): Твой удар разрубил вражеский щит. ${getRandomHero()} присвистнул.`,
+                `✨ ОТЛИЧНО (14): Ты попал в цель с закрытыми глазами. ${getRandomHero()} сказал: «Магия?»`,
+                `✨ ОТЛИЧНО (14): Ты отразил три атаки подряд. ${getRandomHero()} аплодирует.`
+            ],
+            15: [
+                `🔥 ВОСХИТИТЕЛЬНО (15): ${getRandomHero()} встал на колено и сказал: «Ты достоин».`,
+                `🔥 ВОСХИТИТЕЛЬНО (15): Твой удар был настолько силён, что враг отлетел к стене. ${getRandomHero()} в шоке.`,
+                `🔥 ВОСХИТИТЕЛЬНО (15): Ты спас всю группу, заметив засаду. ${getRandomHero()} говорит: «Я горжусь».`,
+                `🔥 ВОСХИТИТЕЛЬНО (15): Ты победил врага его же оружием. ${getRandomHero()} смеётся.`
+            ],
+            16: [
+                `🔥 ЭПИЧНО (16): ${getRandomHero()} сказал: «Теперь я знаю, с кем идти в разведку».`,
+                `🔥 ЭПИЧНО (16): Твой выстрел попал в яблоко, которое враг нёс на голове. Точно в цель!`,
+                `🔥 ЭПИЧНО (16): Ты разоружил врага молниеносным движением. ${getRandomHero()} завидует.`,
+                `🔥 ЭПИЧНО (16): Ты сделал идеальный кувырок через врага и ударил со спины. Красота.`
+            ],
+            17: [
+                `⚡ НЕВЕРОЯТНО (17): ${getRandomHero()} попросил тебя научить его этому приёму. Ты — учитель легенды!`,
+                `⚡ НЕВЕРОЯТНО (17): Ты убил двух врагов одним ударом. ${getRandomHero()} снимает шляпу.`,
+                `⚡ НЕВЕРОЯТНО (17): Ты предугадал манёвр врага и наказал его. ${getRandomHero()} в восторге.`,
+                `⚡ НЕВЕРОЯТНО (17): Твоя магия создала щит, который спас всех. ${getRandomHero()} называет тебя героем.`
+            ],
+            18: [
+                `💥 БЕСПРИМЕРНО (18): ${getRandomHero()} подарил тебе свой личный амулет. Ты избранный.`,
+                `💥 БЕСПРИМЕРНО (18): Ты в одиночку задержал отряд врагов, пока другие уходили. ${getRandomHero()} кланяется.`,
+                `💥 БЕСПРИМЕРНО (18): Твой критический удар разрушил вражеский катапульту. ${getRandomHero()} в шоке.`,
+                `💥 БЕСПРИМЕРНО (18): Ты поймал стрелу в воздухе и метнул обратно. ${getRandomHero()} не верит глазам.`
+            ],
+            19: [
+                `🎉 ЛЕГЕНДАРНО (19): ${getRandomHero()} говорит: «Твоё имя будут помнить вечно».`,
+                `🎉 ЛЕГЕНДАРНО (19): Ты победил врага, даже не вынимая меч — одним взглядом. ${getRandomHero()} в трепете.`,
+                `🎉 ЛЕГЕНДАРНО (19): Ты призвал духа предка, который помог в битве. ${getRandomHero()} просит автограф.`,
+                `🎉 ЛЕГЕНДАРНО (19): Ты спас ${getRandomHero()} от верной смерти. Теперь он твой вечный должник.`
+            ],
+            20: [
+                `🌈 КРИТИЧЕСКИЙ УСПЕХ (20): ${getRandomHero()} падает на колени: «Я твой слуга отныне».`,
+                `🌈 КРИТИЧЕСКИЙ УСПЕХ (20): Ты разрубил молнию пополам. ${getRandomHero()} кричит: «Божество среди нас!»`,
+                `🌈 КРИТИЧЕСКИЙ УСПЕХ (20): Твоя магия воскресила павшего союзника. ${getRandomHero()} плачет от счастья.`,
+                `🌈 КРИТИЧЕСКИЙ УСПЕХ (20): Ты заставил дракона отступить одним взглядом. ${getRandomHero()} целует тебе руку.`
+            ]
+        };
+
+        function getRandomPrediction() {
+            const roll = Math.floor(Math.random() * 20) + 1; // Строго 1-20
+            const options = predictions[roll];
+            const randomIndex = Math.floor(Math.random() * options.length);
+            let text = options[randomIndex];
+            
+            // Замена случайного персонажа
+            while (text.includes('${getRandomHero()}')) {
+                text = text.replace('${getRandomHero()}', getRandomHero());
+            }
+            
+            return { roll, text };
+        }
+
+        dmBtn.addEventListener('click', function() {
+            const { roll, text } = getRandomPrediction();
+            
+            let rollClass = '';
+            let critMark = '';
+            
+            if (roll === 20) {
+                rollClass = 'crit-success';
+                critMark = '🌈 КРИТИЧЕСКИЙ УСПЕХ! 🌈';
+            } else if (roll >= 19) {
+                rollClass = 'crit-success';
+                critMark = '🎉 ЛЕГЕНДАРНО! 🎉';
+            } else if (roll >= 17) {
+                rollClass = 'crit-success';
+                critMark = '⚡ НЕВЕРОЯТНО! ⚡';
+            } else if (roll >= 15) {
+                critMark = '🔥 ВОСХИТИТЕЛЬНО! 🔥';
+            } else if (roll <= 3) {
+                rollClass = 'crit-fail';
+                critMark = '💀 КРИТИЧЕСКИЙ ПРОВАЛ! 💀';
+            } else if (roll <= 6) {
+                rollClass = 'crit-fail';
+                critMark = '❌ ПРОВАЛ ❌';
+            }
+            
+            dmResultDiv.innerHTML = `
+                <div class="dice-roll">
+                    🎲 Выпало: <span class="dice-number ${rollClass}">${roll}</span> ${critMark ? `<span style="font-size:1rem;">${critMark}</span>` : ''}
+                </div>
+                <div class="prediction-text">${text}</div>
+            `;
+        });
+    });
+})();// Модальное окно + отправка формы на adsay2020@list.ru
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('contactModal');
+    const contactBtn = document.querySelector('.btn-group .btn:last-child');
+    const closeBtn = document.querySelector('.close-modal');
+
+    // Открытие окна
+    if (contactBtn && modal) {
+        contactBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.style.display = 'flex';
+        });
+    }
+
+    // Закрытие по крестику
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+    }
+
+    // Закрытие по клику вне окна
+    if (modal) {
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+
+    // Отправка формы на твою почту
+    const form = document.getElementById('contactForm');
+    const statusDiv = document.getElementById('formStatus');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const message = document.getElementById('userMessage').value;
+
+            if (!name || !email || !message) {
+                if (statusDiv) {
+                    statusDiv.innerHTML = '❌ Заполните все поля!';
+                    statusDiv.style.color = '#ff6666';
+                }
+                return;
+            }
+
+            if (statusDiv) {
+                statusDiv.innerHTML = '🕯️ Отправка...';
+                statusDiv.style.color = '#ffb347';
+            }
+
+            // ТВОЙ EMAIL: adsay2020@list.ru
+            fetch('https://formsubmit.co/ajax/adsay2020@list.ru', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    message: message,
+                    _subject: `ComfyUI Artist - новое сообщение от ${name}`
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (statusDiv) {
+                    statusDiv.innerHTML = '✅ Послание доставлено! Я скоро отвечу.';
+                    statusDiv.style.color = '#00f2ff';
+                }
+                form.reset();
+                setTimeout(() => {
+                    if (modal) modal.style.display = 'none';
+                    if (statusDiv) statusDiv.innerHTML = '';
+                }, 2500);
+            })
+            .catch(error => {
+                if (statusDiv) {
+                    statusDiv.innerHTML = '❌ Ошибка. Напиши мне напрямую в Telegram.';
+                    statusDiv.style.color = '#ff6666';
+                }
+                console.error('Ошибка:', error);
+            });
+        });
+    }
+});</script>
+  <script>
+    // Модальное окно
+    const modal = document.getElementById('contactModal');
+    const contactBtn = document.querySelector('.btn-group .btn:last-child');
+    const closeBtn = document.querySelector('.close-modal');
+
+    if (contactBtn) {
+        contactBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.add('active');
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+    }
+
+    // Закрытие по клику вне окна
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+
+    // Обработка отправки формы
+    const form = document.getElementById('contactForm');
+    const statusDiv = document.getElementById('formStatus');
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const message = document.getElementById('userMessage').value;
+
+            statusDiv.innerHTML = '🕯️ Отправляю послание...';
+            statusDiv.style.color = '#ffb347';
+
+            // Здесь можно подключить реальную отправку на почту
+            // Пока просто имитация с открытием почтового клиента
+            const mailtoLink = `mailto:comfy.artist@example.com?subject=Сообщение от ${encodeURIComponent(name)}&body=${encodeURIComponent(`От: ${name} (${email})\n\n${message}`)}`;
+            window.location.href = mailtoLink;
+
+            setTimeout(() => {
+                statusDiv.innerHTML = '✅ Послание отправлено! Я скоро отвечу.';
+                statusDiv.style.color = '#00f2ff';
+                form.reset();
+                setTimeout(() => {
+                    modal.classList.remove('active');
+                    statusDiv.innerHTML = '';
+                }, 2000);
+            }, 500);
+        });
+    }
+</script><!-- Модальное окно связи -->
+<div id="contactModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>📜 Связаться</h3>
+        <p>Напишите мне — я отвечу в самое ближайшее время</p>
+        <form id="contactForm">
+            <div class="form-group">
+                <label>🧙 Имя</label>
+                <input type="text" id="userName" required placeholder="Как к вам обращаться?">
+            </div>
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="userEmail" required placeholder="ваш@email.ru">
+            </div>
+            <div class="form-group">
+                <label>📜 Сообщение</label>
+                <textarea id="userMessage" required placeholder="Ваше послание..."></textarea>
+            </div>
+            <button type="submit" class="submit-btn">✨ Отправить ✨</button>
+            <div id="formStatus" class="form-message"></div>
+        </form>
+    </div>
+</div>
+<div class="container">
+    <nav class="navbar">
+        <div class="logo">✨ ComfyUI Artist ✨</div>
+        <div class="nav-links">
+            <a href="#gallery">Работы</a>
+            <a href="#video">Видео</a>
+            <a href="#music">Музыка</a>
+            <a href="#contact">Контакты</a>
+        </div>
+    </nav>
+        <div class="hero">
+        <h1>ComfyUI Artist</h1>
+        <div class="tagline" style="margin: 0.5rem 0;">генеративное искусство · AI · фото | видео | музыка</div>
+        <div class="team-header">
+            <div class="lead-specialist">⭐ Ведущий специалист: Евлоев А.А.</div>
+            <div class="partner-chips">
+                <div class="partner-chip"><a href="https://t.me/prazdniknl" target="_blank">Иса Бард</a></div>
+                <div class="partner-chip"><a href="https://t.me/AdamM666" target="_blank">Адаман Друид</a></div>
+                <div class="partner-chip"><a href="https://t.me/AdamM666" target="_blank">Азраил Чёрный Рыцарь</a></div>
+                <div class="partner-chip"><a href="https://t.me/MicaelMich" target="_blank">Микаил Рыцарь-по-праву</a></div>
+                <div class="partner-chip"><a href="https://t.me/ID2kk" target="_blank">Магор Теневой Ассасин</a></div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="#gallery" class="btn btn-primary">Смотреть работы</a>
+            <a href="#contact" class="btn">Связаться</a>
+        </div>
+    </div>
+<!-- Секция DM Оракул -->
+<div class="dm-section">
+    <button id="dmOracleBtn" class="dm-button">🎲 Бросок DM (d20) 🎲</button>
+    <div id="dmResult" class="dm-result">
+        <div class="prediction-text">🧙‍♂️ Нажми на кубик, путник... Твоя судьба ждёт!</div>
+    </div>
+</div>
+    <section id="gallery">
+        <h2>🖼️ Изображения</h2>
+        <div class="gallery-grid" id="imageGallery"></div>
+    </section>
+
+<section id="video">
+    <h2>🎬 Видео</h2>
+    <div class="video-grid">
+        <div class="video-card">
+            <h3>📽️ Ты -Друид из Dungeons & Dragons</h3>
+            <div class="video-wrapper">
+                <iframe 
+                    src="https://www.youtube.com/embed/jAKUcPMSmco" 
+                    title="Ты - бард из Dungeons & Dragons" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <p class="video-caption">🎵 Погружение в атмосферу подземелий и драконов через музыку барда</p>
+        </div>
+    </div>
+</section>
+
+    <section id="music">
+        <h2>🎧 Музыка</h2>
+        <div class="music-player">
+            <div class="track-list" id="trackList"></div>
+            <audio id="globalAudio" controls style="width:100%; margin-top:1rem;"></audio>
+            <div id="nowPlaying" style="text-align:center; margin-top:0.5rem;"></div>
+        </div>
+    </section>
+
+    <section id="partners">
+        <h2>⚔️ Наши союзники</h2>
+        <div class="partners-grid" id="partnersGrid"></div>
+    </section>
+
+    <section id="contact">
+    <h2>📬 Контакты</h2>
+    <div class="social-links">
+        <a href="https://www.youtube.com/@adsaevloev-f5q" target="_blank">YouTube</a>
+        <a href="#">Instagram</a>
+        <a href="#">Telegram</a>
+        <a href="#">GitHub</a>
+    </div>
+</section>
+</div>
+<footer>
+    <div class="container">
+        <!-- Волшебная мистическая кнопка -->
+        <div class="cursed-book-trigger" id="cursedBookBtn">
+            <span class="book-icon">📖</span>
+        </div>
+        <p>© 2026 ComfyUI Artist — неон и древние заклинания. Партнёры: Евлоев А.А., Иса Бард, Адаман Друид, Азраил Чёрный Рыцарь, Микаил Рыцарь-по-праву, Магор Теневой Ассасин.</p>
+    </div>
+</footer>
+<script>
+    const images = [
+        "https://picsum.photos/id/1015/400/400",
+        "https://picsum.photos/id/104/400/400",
+        "https://picsum.photos/id/169/400/400",
+        "https://picsum.photos/id/155/400/400",
+        "https://picsum.photos/id/29/400/400",
+        "https://picsum.photos/id/96/400/400"
+    ];
+    const galleryDiv = document.getElementById("imageGallery");
+    if (galleryDiv) {
+        images.forEach(src => {
+            const div = document.createElement("div");
+            div.className = "gallery-item";
+            const img = document.createElement("img");
+            img.src = src;
+            div.appendChild(img);
+            galleryDiv.appendChild(div);
+        });
+    }
+
+
+
+    const tracks = [
+        { name: "Мелодия леса", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+        { name: "Зов дракона", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+        { name: "Танец огня", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
+    ];
+    const trackListDiv = document.getElementById("trackList");
+    const audioPlayer = document.getElementById("globalAudio");
+    const nowPlayingDiv = document.getElementById("nowPlaying");
+    if (trackListDiv) {
+        tracks.forEach(t => {
+            const trackDiv = document.createElement("div");
+            trackDiv.className = "track";
+            trackDiv.innerHTML = `<span>🎵 ${t.name}</span><button class="play-btn" data-url="${t.url}" data-name="${t.name}">▶</button>`;
+            trackListDiv.appendChild(trackDiv);
+        });
+        document.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const url = btn.getAttribute('data-url');
+                const name = btn.getAttribute('data-name');
+                if (url && audioPlayer) {
+                    audioPlayer.src = url;
+                    audioPlayer.play();
+                    if (nowPlayingDiv) nowPlayingDiv.innerText = `Сейчас играет: ${name}`;
+                }
+            });
+        });
+    }
+
+    const allPartners = [
+        { name: "Евлоев А.А.", role: "Ведущий специалист", tg: null },
+        { name: "Иса Бард", role: "Мастер звука", tg: "prazdniknl" },
+        { name: "Адаман Друид", role: "Хранитель лесов", tg: "AdamM666" },
+        { name: "Азраил Чёрный Рыцарь", role: "Страж миров", tg: "AdamM666" },
+        { name: "Микаил Рыцарь-по-праву", role: "Защитник кода", tg: "MicaelMich" },
+        { name: "Магор Теневой Ассасин", role: "Тень во тьме", tg: "ID2kk" }
+    ];
+    const partnersContainer = document.getElementById("partnersGrid");
+    if (partnersContainer) {
+        allPartners.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "partner-card";
+            if (p.tg) {
+                card.innerHTML = `<div class="partner-name"><a href="https://t.me/${p.tg}" target="_blank">${p.name}</a></div><div class="partner-role">${p.role}</div>`;
+            } else {
+                card.innerHTML = `<div class="partner-name">${p.name}</div><div class="partner-role">${p.role}</div>`;
+            }
+            partnersContainer.appendChild(card);
+        });
+    }
+    // ========== ПРОКЛЯТАЯ КНИГА (мистическая кнопка-артефакт) ==========
+(function() {
+    const trigger = document.getElementById('cursedBookBtn');
+    let overlay = document.getElementById('darkOverlay');
+    let whisper = document.getElementById('whisperMsg');
+    
+    if (!trigger) {
+        console.log('❌ Проклятая книга не найдена');
+        return;
+    }
+    
+    // Создаём overlay, если его нет
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'darkOverlay';
+        overlay.className = 'dark-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    // Создаём whisper, если его нет
+    if (!whisper) {
+        whisper = document.createElement('div');
+        whisper.id = 'whisperMsg';
+        whisper.className = 'whisper-message';
+        document.body.appendChild(whisper);
+    }
+    
+    let isCursedActive = false;
+    let lastActivation = 0;
+    const COOLDOWN = 20000; // 20 секунд
+    
+    // 35+ тёмных шепотов (мистика, DnD, лор)
+    const darkWhispers = [
+        "📜 Ты открыл книгу... Теперь она следит за тобой.",
+        "💀 Глитч растёт. Скоро оно придёт.",
+        "🕯️ На стене чья-то тень. Но ты один.",
+        "🌀 Твоё отражение в экране улыбнулось само.",
+        "🔮 Книга шепчет: «В твоём доме холодно...»",
+        "⚔️ Азраил знает, что ты это читаешь.",
+        "🌙 Ты не закроешь глаза этой ночью.",
+        "📖 Одна из твоих генераций... жива.",
+        "🎭 Магор проверяет твою стойкость. Стой.",
+        "🖤 Ты услышал шаги за спиной? А зря.",
+        "🐉 Книга сказала: «Закрой меня. Пожалуйста».",
+        "🔥 Огонь в пещере погас. Ты не один.",
+        "⚡ DM смотрит на тебя. Улыбается.",
+        "🍂 За окном листья. Но не сезон.",
+        "👁️ Глаз дракона мигнул. Только что.",
+        "📖 В книге нет букв. Только твой страх.",
+        "🔪 Адаман Друид оставил закладку. Из кожи.",
+        "🧙‍♂️ Иса Бард перестал петь. Прислушайся.",
+        "🛡️ Микаил закрыл глаза. Он не хочет видеть.",
+        "💀 Книга выбрала тебя. Смирись.",
+        "🕸️ Паутина на обложке движется.",
+        "⚙️ ComfyUI сбился с такта. Это не баг.",
+        "🌑 Подвал стал глубже. На шаг.",
+        "📜 Оракул DM молчит. Боится.",
+        "🎲 Кубик упал на ребро. Вечность.",
+        "🌪️ Вихрь из кода. Он близко.",
+        "⛓️ Цепи бряцают. Но ты один.",
+        "🧬 Твоя видеокарта слышит шепот.",
+        "🔞 Эта книга читает тебя наоборот.",
+        "⌛ Времени не осталось. Но оно и не нужно.",
+        "🐦‍⬛ Ворон за окном каркнул твоё имя.",
+        "🕳️ Не оглядывайся. Пожалуйста.",
+        "⚰️ Книга пахнет сырой землёй.",
+        "🧿 Твоя аватарка моргнула. Правда.",
+        "🔮 Евлоев А.А. сказал: «Не надо».",
+        "🌙 Луна покраснела. Ты заметил?"
+    ];
+    
+    function getRandomWhisper() {
+        return darkWhispers[Math.floor(Math.random() * darkWhispers.length)];
+    }
+    
+    function startCursedEffect(e) {
+        e.preventDefault();
+        if (isCursedActive) return;
+        
+        const now = Date.now();
+        if (now - lastActivation < COOLDOWN) {
+            if (whisper) {
+                whisper.textContent = "📖 Книга отдыхает от проклятий... Приходи позже.";
+                whisper.classList.add('show');
+                setTimeout(() => whisper.classList.remove('show'), 1500);
+            }
+            return;
+        }
+        
+        lastActivation = now;
+        isCursedActive = true;
+        
+        // 1. Затемнение
+        if (overlay) overlay.classList.add('dark');
+        
+        // 2. Глитч на body
+        document.body.classList.add('glitch-active');
+        
+        // 3. Вибрация (если поддерживается)
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+        
+        // 4. Показать шепот через 0.4 сек
+        setTimeout(() => {
+            if (whisper) {
+                whisper.textContent = getRandomWhisper();
+                whisper.classList.add('show');
+            }
+        }, 400);
+        
+        // 5. Сброс через 4.5 секунды
+        setTimeout(() => {
+            if (whisper) whisper.classList.remove('show');
+            document.body.classList.remove('glitch-active');
+            if (overlay) overlay.classList.remove('dark');
+            isCursedActive = false;
+        }, 4500);
+    }
+    
+    trigger.addEventListener('click', startCursedEffect);
+})();
+</script>
+
+
+</body><style>/* ===== МАГИЧЕСКИЙ ТУМАН ПО КРАЯМ ===== */
+.fog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+.fog-layer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 80%, rgba(40, 20, 80, 0.25), rgba(10, 5, 20, 0.6) 70%, transparent);
+    opacity: 0.5;
+    animation: fogMove 20s linear infinite, fogPulse 8s ease-in-out infinite;
+}
+.fog-layer-right {
+    left: auto;
+    right: 0;
+    background: radial-gradient(circle at 80% 80%, rgba(60, 30, 100, 0.3), rgba(10, 5, 20, 0.5) 70%, transparent);
+    animation: fogMoveRight 22s linear infinite, fogPulse 10s ease-in-out infinite reverse;
+}
+.fog-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(to top, rgba(20, 10, 40, 0.8), transparent);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    z-index: 1;
+    animation: fogBottomPulse 6s infinite alternate;
+}
+@keyframes fogMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+@keyframes fogMoveRight {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); }
+}
+@keyframes fogPulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
+}
+@keyframes fogBottomPulse {
+    0% { opacity: 0.4; backdrop-filter: blur(4px); }
+    100% { opacity: 0.8; backdrop-filter: blur(12px); }
+}
+/* Адаптация для мобильных: чуть меньше тумана, чтобы не мешал */
+@media (max-width: 700px) {
+    .fog-bottom { height: 100px; backdrop-filter: blur(4px); }
+    .fog-layer { opacity: 0.3; }
+}/* DM Оракул - стили */
+.dm-section {
+    background: rgba(0,0,0,0.4);
+    border-radius: 2rem;
+    padding: 1.2rem;
+    margin: 1rem 0;
+    border: 1px solid #ffb34733;
+    text-align: center;
+}
+.dm-button {
+    background: linear-gradient(135deg, #7a2e2e, #4a1a1a);
+    border: 2px solid #ffb347;
+    padding: 0.8rem 2rem;
+    border-radius: 3rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffd966;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 0 12px rgba(255, 180, 70, 0.4);
+}
+.dm-button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px #ffb347;
+    background: linear-gradient(135deg, #9a3e3e, #5a2a2a);
+}
+.dm-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(0,0,0,0.6);
+    border-radius: 1.5rem;
+    border-left: 6px solid #ffb347;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.dice-roll {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+    animation: diceSpin 0.4s ease-out;
+}
+.dice-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    display: inline-block;
+    margin: 0 0.5rem;
+    background: #2a1a0a;
+    padding: 0.1rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid #ffb347;
+}
+.crit-success {
+    color: #00ffaa;
+    text-shadow: 0 0 8px #00ffaa;
+}
+.crit-fail {
+    color: #ff4444;
+    text-shadow: 0 0 6px #ff4444;
+}
+.prediction-text {
+    font-size: 1.05rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #eeddcc;
+}
+@keyframes diceSpin {
+    0% { transform: rotate(0deg) scale(0.8); opacity: 0; }
+    50% { transform: rotate(180deg) scale(1.1); opacity: 0.8; }
+    100% { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+    .spark {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        border-radius: 50%;
+        opacity: 0;
+        filter: blur(1px);
+        animation: flySpark linear forwards;
+    }
+    @keyframes flySpark {
+        0% {
+            opacity: 1;
+            transform: translateY(0) translateX(0) scale(1);
+        }
+        30% {
+            opacity: 0.9;
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-250px) translateX(calc(-30px + 60px * var(--dir))) scale(0.2);
+        }
+    }
+@keyframes neonBreathing {
+    0% {
+        border-color: #b87c3a;
+        box-shadow: 0 0 3px rgba(0, 242, 255, 0.3), 0 0 6px rgba(255, 45, 149, 0.2);
+    }
+    50% {
+        border-color: #ffb347;
+        box-shadow: 0 0 12px rgba(0, 242, 255, 0.8), 0 0 20px rgba(255, 45, 149, 0.7);
+    }
+    100% {
+        border-color: #b87c3a;
+        box-shadow: 0 0 3px rgba(0, 242, 255, 0.3), 0 0 6px rgba(255, 45, 149, 0.2);
+    }
+}
+
+.partner-card, .gallery-item, .video-card, .track {
+    animation: neonBreathing 2.5s infinite ease-in-out;
+    transition: all 0.2s ease;
+}
+
+.partner-card:hover, .gallery-item:hover, .video-card:hover, .track:hover {
+    animation: none;
+    border-color: #ff2d95 !important;
+    box-shadow: 0 0 22px #ff2d95, 0 0 10px cyan !important;
+    transform: scale(1.01);
+}
+.smoke {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    bottom: 0;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle, rgba(80,60,40,0.4), transparent);
+    border-radius: 50%;
+    filter: blur(8px);
+    animation: riseSmoke 3s ease-out forwards;
+}
+@keyframes riseSmoke {
+    0% { opacity: 0.4; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-200px) scale(3); }
+}
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.modal.active {
+    display: flex;
+}
+.modal-content {
+    background: linear-gradient(135deg, #1e1a14, #2a241c);
+    border: 2px solid #ffb347;
+    border-radius: 2rem;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 40px rgba(0, 242, 255, 0.4), 0 0 20px rgba(255, 45, 149, 0.3);
+    animation: modalFadeIn 0.3s ease;
+    position: relative;
+}
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+.modal-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff0c0, #ffb347);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+.modal-content p {
+    color: #ccaa80;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #ffb347;
+    transition: 0.2s;
+}
+.close-modal:hover {
+    color: #ff2d95;
+    transform: scale(1.1);
+}
+.form-group {
+    margin-bottom: 1.2rem;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #ffd966;
+    font-size: 0.85rem;
+}
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 0.7rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #b87c3a;
+    border-radius: 1rem;
+    color: #eeddcc;
+    font-family: inherit;
+    transition: 0.2s;
+}
+.form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: #00f2ff;
+    box-shadow: 0 0 8px cyan;
+}
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+.submit-btn {
+    background: linear-gradient(95deg, #c6893b, #a5682a);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 2rem;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.2s;
+}
+.submit-btn:hover {
+    background: linear-gradient(95deg, #ffb347, #c6893b);
+    box-shadow: 0 0 12px #ffb347;
+    transform: scale(1.01);
+}
+.form-message {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #00f2ff;
+}
+/* ===== МИСТИЧЕСКАЯ КНОПКА ПРОКЛЯТОЙ КНИГИ ===== */
+.cursed-book-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.8rem;
+    background: rgba(10, 5, 3, 0.7);
+    border: 1px solid rgba(150, 70, 40, 0.6);
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    font-size: 2rem;
+    box-shadow: 0 0 6px rgba(100, 40, 20, 0.6), inset 0 0 4px rgba(200, 100, 50, 0.3);
+    backdrop-filter: blur(4px);
+    position: relative;
+    animation: artifactPulse 3s infinite alternate;
+}
+/* Пульсация артефакта */
+@keyframes artifactPulse {
+    0% { box-shadow: 0 0 4px #8b3a2a, inset 0 0 2px #aa5533; border-color: #8b4a2a; }
+    100% { box-shadow: 0 0 16px #cc6644, inset 0 0 8px #ff9966; border-color: #cc8855; }
+}
+/* Свечение иконки */
+.cursed-book-trigger .book-icon {
+    filter: drop-shadow(0 0 2px #ffaa77);
+    transition: filter 0.2s;
+}
+/* Мистический туман при наведении */
+.cursed-book-trigger::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(100,40,20,0.4), transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: -1;
+}
+.cursed-book-trigger:hover::before {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.4);
+}
+/* Эффект при наведении */
+.cursed-book-trigger:hover {
+    transform: scale(1.12);
+    background: rgba(40, 15, 8, 0.9);
+    border-color: #ff8866;
+    box-shadow: 0 0 22px #ff6633, inset 0 0 12px #ffaa77;
+}
+.cursed-book-trigger:hover .book-icon {
+    filter: drop-shadow(0 0 6px #ffaa77);
+    animation: iconShake 0.3s ease;
+}
+@keyframes iconShake {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg); }
+    50% { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
+}
+/* Древняя руна под иконкой (при наведении) */
+.cursed-book-trigger::after {
+    content: "ᛉ";
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: #aa5533;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-shadow: 0 0 3px red;
+}
+.cursed-book-trigger:hover::after {
+    opacity: 0.9;
+}
+/* Анимация тряски и глитча */
+@keyframes shakePage {
+    0% { transform: translate(1px, 1px); }
+    10% { transform: translate(-1px, -2px); }
+    20% { transform: translate(-3px, 0px); }
+    30% { transform: translate(3px, 2px); }
+    40% { transform: translate(1px, -1px); }
+    50% { transform: translate(-1px, 2px); }
+    60% { transform: translate(-3px, 1px); }
+    70% { transform: translate(3px, 1px); }
+    80% { transform: translate(-1px, -1px); }
+    90% { transform: translate(1px, 2px); }
+    100% { transform: translate(1px, -2px); }
+}
+.glitch-active {
+    animation: shakePage 0.2s infinite;
+    filter: hue-rotate(15deg) contrast(150%) brightness(110%);
+}
+/* Затемнение */
+.dark-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
+    z-index: 9999;
+    transition: background 0.6s;
+}
+.dark-overlay.dark {
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(3px);
+}
+/* Стиль шепота */
+.whisper-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #0a0505;
+    color: #aa6655;
+    padding: 1.2rem 2rem;
+    border-radius: 2rem;
+    font-family: monospace;
+    font-size: 1rem;
+    text-align: center;
+    z-index: 10000;
+    border: 1px solid #aa4433;
+    box-shadow: 0 0 30px rgba(150, 40, 20, 0.6);
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+    letter-spacing: 2px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.whisper-message.show {
+    opacity: 1;
+}
+@media (max-width: 700px) {
+    .whisper-message { white-space: normal; width: 80%; font-size: 0.8rem; padding: 0.8rem 1rem; }
+    .cursed-book-trigger { width: 48px; height: 48px; font-size: 1.6rem; }
+    .cursed-book-trigger::after { font-size: 0.7rem; bottom: -16px; }
+}
+/* Стили для YouTube видео */
+.video-card {
+    background: rgba(30, 20, 12, 0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 1rem;
+    border: 1px solid #b87c3a;
+    padding: 0.8rem;
+    transition: 0.2s;
+}
+.video-card:hover {
+    transform: translateY(-5px);
+    border-color: #ffb347;
+    box-shadow: 0 0 15px rgba(255, 180, 70, 0.4);
+}
+.video-card h3 {
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    color: #ffd966;
+}
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 соотношение сторон */
+    height: 0;
+    overflow: hidden;
+    border-radius: 0.7rem;
+}
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.7rem;
+    border: 1px solid #b87c3a;
+}
+.video-caption {
+    font-size: 0.8rem;
+    margin-top: 0.6rem;
+    color: #ccaa80;
+    font-style: italic;
+    text-align: center;
+}
+</style>
+<script>
+    function createSpark() {
+      if (Math.random() > 0.7) {
+    const smoke = document.createElement('div');
+    smoke.classList.add('smoke');
+    smoke.style.left = (parseFloat(spark.style.left) - 20) + 'px';
+    smoke.style.bottom = '0px';
+    document.body.appendChild(smoke);
+    setTimeout(() => smoke.remove(), 3000);
+}
+        const spark = document.createElement('div');
+        spark.classList.add('spark');
+        
+        const size = Math.random() * 6 + 2;
+        spark.style.width = size + 'px';
+        spark.style.height = size + 'px';
+        
+        const hue = 20 + Math.random() * 25; // 20-45° — оранжево-красный
+        spark.style.background = `radial-gradient(circle, hsl(${hue}, 100%, 65%), hsl(${hue}, 90%, 40%))`;
+        
+        spark.style.left = Math.random() * window.innerWidth + 'px';
+        spark.style.bottom = '0px';
+        
+        const duration = Math.random() * 2.5 + 1.2;
+        spark.style.animationDuration = duration + 's';
+        spark.style.animationDelay = Math.random() * 3 + 's';
+        
+        spark.style.setProperty('--dir', Math.random());
+        
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), duration * 1000 + 500);
+    }
+    setInterval(createSpark, 120);
+</script>
+</html>
